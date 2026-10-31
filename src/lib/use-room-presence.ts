@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { LANGUAGES } from "@/lib/constants";
 import { createSupabaseClient } from "@/lib/supabase-browser";
 
@@ -16,39 +17,45 @@ export function useRoomPresence(roomCode: string, language?: string) {
   const [counts, setCounts] = useState<PresenceCounts>(emptyCounts);
 
   useEffect(() => {
-    const supabase = createSupabaseClient();
-    if (!supabase || !roomCode) return;
-
     let active = true;
-    const sessionId = crypto.randomUUID();
-    const channel = supabase.channel(`room-presence-${roomCode}`, {
-      config: { presence: { key: sessionId } },
-    });
+    let supabase: Awaited<ReturnType<typeof createSupabaseClient>> = null;
+    let channel: RealtimeChannel | null = null;
+    const connect = async () => {
+      supabase = await createSupabaseClient();
+      if (!active || !supabase || !roomCode) return;
+      const sessionId = crypto.randomUUID();
+      channel = supabase.channel(`room-presence-${roomCode}`, {
+        config: { presence: { key: sessionId } },
+      });
 
-    channel.on("presence", { event: "sync" }, () => {
-      if (!active) return;
-      const next = emptyCounts();
-      const presence = channel.presenceState<PresenceMeta>();
-      for (const entries of Object.values(presence)) {
-        for (const entry of entries) {
-          if (!entry.language) continue;
-          next.total += 1;
-          if (entry.language in next.byLanguage) next.byLanguage[entry.language] += 1;
+      channel.on("presence", { event: "sync" }, () => {
+        if (!active || !channel) return;
+        const next = emptyCounts();
+        const presence = channel.presenceState<PresenceMeta>();
+        for (const entries of Object.values(presence)) {
+          for (const entry of entries) {
+            if (!entry.language) continue;
+            next.total += 1;
+            if (entry.language in next.byLanguage) next.byLanguage[entry.language] += 1;
+          }
         }
-      }
-      setCounts(next);
-    });
+        setCounts(next);
+      });
 
-    channel.subscribe((status) => {
-      if (status === "SUBSCRIBED" && language) {
-        void channel.track({ language });
-      }
-    });
+      channel.subscribe((status) => {
+        if (status === "SUBSCRIBED" && language && channel) {
+          void channel.track({ language });
+        }
+      });
+    };
+    void connect();
 
     return () => {
       active = false;
-      void channel.untrack();
-      void supabase.removeChannel(channel);
+      if (channel && supabase) {
+        void channel.untrack();
+        void supabase.removeChannel(channel);
+      }
     };
   }, [language, roomCode]);
 

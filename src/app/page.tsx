@@ -56,7 +56,7 @@ export default function Home() {
   async function joinRoom(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (joinCode.length !== 6 || joining) return;
-    const supabase = createSupabaseClient();
+    const supabase = await createSupabaseClient();
     if (!supabase) {
       setJoinError(t.codeLookupError);
       return;
@@ -84,7 +84,7 @@ export default function Home() {
       setError(t.titleRequired);
       return;
     }
-    const supabase = createSupabaseClient();
+    const supabase = await createSupabaseClient();
     if (!supabase) {
       setError(t.supabaseError);
       return;

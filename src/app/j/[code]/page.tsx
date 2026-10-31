@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { Card, LanguageSelector, StatusBadge } from "@/components/ui";
 import { DEFAULT_LANGUAGES, LANGUAGES } from "@/lib/constants";
 import { getMessages, type ScreenLanguage } from "@/lib/i18n";
@@ -70,15 +71,18 @@ export default function AudiencePage() {
   }, [captions.length]);
 
   useEffect(() => {
-    const supabase = createSupabaseClient();
-    if (!supabase) {
-      setError("잠시 후 다시 시도해 주세요");
-      setLoading(false);
-      return;
-    }
-
     let active = true;
+    let client: Awaited<ReturnType<typeof createSupabaseClient>> = null;
+    let channel: RealtimeChannel | null = null;
     const loadRoom = async () => {
+      client = await createSupabaseClient();
+      if (!active) return;
+      if (!client) {
+        setError("잠시 후 다시 시도해 주세요");
+        setLoading(false);
+        return;
+      }
+      const supabase = client;
       const { data: room, error: roomError } = await supabase
         .from("rooms").select("title,translation_languages").eq("code", code).maybeSingle();
       if (!active) return;
@@ -112,27 +116,26 @@ export default function AudiencePage() {
         logDatabaseError("audience captions lookup failed", captionError);
         setError("잠시 후 다시 시도해 주세요");
       }
-      else setCaptions(data ?? []);
+      else setCaptions((data ?? []) as unknown as Caption[]);
       setLoading(false);
+      channel = supabase
+        .channel(`audience-captions-${code}`)
+        .on("postgres_changes", {
+          event: "INSERT", schema: "public", table: "captions", filter: `room_code=eq.${code}`,
+        }, (payload) => appendCaption(payload.new as Caption))
+        .on("postgres_changes", {
+          event: "UPDATE", schema: "public", table: "captions", filter: `room_code=eq.${code}`,
+        }, (payload) => updateCaption(payload.new as Caption))
+        .subscribe((status) => {
+          if (status === "CHANNEL_ERROR" && active) {
+            console.error("[audience realtime] caption subscription failed", { roomCode: code });
+            setError("잠시 후 다시 시도해 주세요");
+          }
+        });
     };
     void loadRoom();
 
-    const channel = supabase
-      .channel(`audience-captions-${code}`)
-      .on("postgres_changes", {
-        event: "INSERT", schema: "public", table: "captions", filter: `room_code=eq.${code}`,
-      }, (payload) => appendCaption(payload.new as Caption))
-      .on("postgres_changes", {
-        event: "UPDATE", schema: "public", table: "captions", filter: `room_code=eq.${code}`,
-      }, (payload) => updateCaption(payload.new as Caption))
-      .subscribe((status) => {
-        if (status === "CHANNEL_ERROR" && active) {
-          console.error("[audience realtime] caption subscription failed", { roomCode: code });
-          setError("잠시 후 다시 시도해 주세요");
-        }
-      });
-
-    return () => { active = false; void supabase.removeChannel(channel); };
+    return () => { active = false; if (client && channel) void client.removeChannel(channel); };
   }, [appendCaption, code, updateCaption]);
 
   function changeLanguage(nextLanguage: string) {
