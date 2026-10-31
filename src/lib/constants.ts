@@ -5,5 +5,5 @@ export const LANGUAGES = [
   { code: "ru", name: "Русский" },
 ];
 
-export const SCENES = ["school", "safety", "university", "religion", "tourism"] as const;
+export const SCENES = ["school", "safety", "university", "religion", "tourism", "other"] as const;
 export type SceneType = typeof SCENES[number];

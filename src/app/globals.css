@@ -36,7 +36,6 @@ button { cursor:pointer; }
 .optional-label { margin-bottom: 10px; color: #a3abb3; font-size: 11px; }
 .scene-options { display: grid; gap: 8px; grid-template-columns: repeat(2,1fr); }
 .scene-choice { min-height: 61px; display: flex; align-items: center; gap: 10px; text-align: left; padding: 8px 10px; border: 1px solid #eceeeb; border-radius: 12px; background: white; color: inherit; transition: border .15s, background .15s; }
-.scene-choice:last-child { grid-column: 1 / -1; }
 .scene-choice.selected { border-color: rgba(11,122,94,.55); background: #f7fbf8; }
 .choice-indicator { width: 16px; height: 16px; flex: 0 0 16px; border: 1px solid #d5dad6; border-radius: 50%; }
 .selected .choice-indicator { border: 5px solid var(--brand); }

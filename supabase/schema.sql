@@ -5,10 +5,12 @@ create table if not exists public.rooms (
   id uuid primary key default gen_random_uuid(),
   code text not null unique,
   title text not null,
-  scene text not null check (scene in ('school','safety','university','religion','tourism')),
+  scene text not null check (scene in ('school','safety','university','religion','tourism','other')),
   status text not null default 'live' check (status in ('live','ended')),
   created_at timestamptz not null default now()
 );
+alter table public.rooms drop constraint if exists rooms_scene_check;
+alter table public.rooms add constraint rooms_scene_check check (scene in ('school','safety','university','religion','tourism','other'));
 
 create table if not exists public.captions (
   id uuid primary key default gen_random_uuid(),
