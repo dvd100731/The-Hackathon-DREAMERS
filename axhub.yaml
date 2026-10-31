@@ -1,0 +1,18 @@
+version: axhub/v1
+name: can-this-meeting-be-translated
+runtime:
+  port: 3000
+  health_path: /
+build:
+  framework: node
+  deploy_method: docker
+env:
+  required:
+    - name: NEXT_PUBLIC_SUPABASE_URL
+      scope: both
+    - name: NEXT_PUBLIC_SUPABASE_ANON_KEY
+      scope: both
+    - name: ANTHROPIC_API_KEY
+      scope: runtime
+    - name: ANTHROPIC_MODEL
+      scope: runtime

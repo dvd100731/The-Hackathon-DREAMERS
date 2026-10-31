@@ -1,11 +1,12 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button, Card } from "@/components/ui";
+import { Button, Card, CountryFlag } from "@/components/ui";
 import { createSupabaseClient } from "@/lib/supabase-browser";
 import { type SceneType } from "@/lib/constants";
+import { getMessages, SCREEN_LANGUAGES, type ScreenLanguage } from "@/lib/i18n";
 
 const scenes: { id: SceneType; label: string; detail: string }[] = [
   { id: "school", label: "학교", detail: "학부모 설명회 · 오리엔테이션" },
@@ -17,27 +18,75 @@ const scenes: { id: SceneType; label: string; detail: string }[] = [
 ];
 
 function makeCode() {
-  return Math.random().toString(36).slice(2, 8).toUpperCase();
+  const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  return Array.from({ length: 6 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
 }
 
 export default function Home() {
+  const [screenLanguage, setScreenLanguage] = useState<ScreenLanguage>("ko");
   const [scene, setScene] = useState<SceneType>("school");
   const [title, setTitle] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [joinCode, setJoinCode] = useState("");
+  const [joinError, setJoinError] = useState("");
+  const [joining, setJoining] = useState(false);
   const router = useRouter();
+  const t = getMessages(screenLanguage);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem("modue-screen-language") as ScreenLanguage | null;
+    if (stored && SCREEN_LANGUAGES.some(({ code }) => code === stored)) setScreenLanguage(stored);
+  }, []);
+
+  useEffect(() => {
+    document.title = t.service;
+  }, [t.service]);
+
+  function changeScreenLanguage(language: ScreenLanguage) {
+    setScreenLanguage(language);
+    window.localStorage.setItem("modue-screen-language", language);
+  }
+
+  function updateJoinCode(value: string) {
+    setJoinCode(value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6));
+    setJoinError("");
+  }
+
+  async function joinRoom(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (joinCode.length !== 6 || joining) return;
+    const supabase = createSupabaseClient();
+    if (!supabase) {
+      setJoinError(t.codeLookupError);
+      return;
+    }
+    setJoining(true);
+    setJoinError("");
+    const { data, error: lookupError } = await supabase.from("rooms").select("status").eq("code", joinCode).maybeSingle();
+    setJoining(false);
+    if (lookupError) {
+      setJoinError(t.codeLookupError);
+      return;
+    }
+    if (!data) {
+      setJoinError(t.invalidCode);
+      return;
+    }
+    router.push(data.status === "ended" ? `/s/${joinCode}` : `/j/${joinCode}`);
+  }
 
   async function createRoom(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     const cleanTitle = title.trim();
     if (!cleanTitle) {
-      setError("설명회 제목을 입력해 주세요.");
+      setError(t.titleRequired);
       return;
     }
     const supabase = createSupabaseClient();
     if (!supabase) {
-      setError("Supabase 환경변수를 확인해 주세요.");
+      setError(t.supabaseError);
       return;
     }
     setSaving(true);
@@ -49,22 +98,22 @@ export default function Home() {
       if (insertError) throw insertError;
       router.push(`/host/${code}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "방을 만들지 못했어요. 잠시 후 다시 시도해 주세요.");
+      setError(err instanceof Error ? err.message : t.createError);
       setSaving(false);
     }
   }
 
   return (
     <main className="page-shell">
-      <header className="topbar"><Link href="/" className="brand-mark"><span className="brand-icon">모</span> 모두의 설명회</Link><span className="topbar-tag">함께 듣고, 함께 이해해요</span></header>
+      <header className="topbar"><Link href="/" className="brand-mark"><span className="brand-icon">이</span><span className="service-name brand-logo-name">{t.service}</span></Link><span className="topbar-tag">{t.tagline}</span></header>
       <section className="hero-grid">
-        <div className="hero-copy"><div className="eyebrow"><span className="eyebrow-dot"/> 누구에게나 열려 있는 설명회</div><h1>한 사람의 설명을<br/><span>모두의 이해로.</span></h1><p className="hero-description">말씀은 한 번이면 충분해요.<br/>각자의 언어로, 모두가 함께 들어요.</p><div className="language-pills"><span>English</span><span>Tiếng Việt</span><span>中文</span><span>Русский</span></div></div>
-        <Card className="setup-card"><div className="card-kicker">새 설명회 만들기 <span className="step-number">01</span></div><h2>어떤 이야기를 나누시나요?</h2><p className="card-description">정보를 입력하고, 다 같이 이해하는 시간을 시작해 보세요.</p>
-          <form onSubmit={createRoom} className="setup-form"><label className="field-label" htmlFor="title">설명회 제목</label><input id="title" name="title" required maxLength={120} value={title} onChange={(event) => setTitle(event.target.value)} className="text-input" placeholder="예: 신입 학부모 오리엔테이션"/><div className="label-row"><span className="field-label">어떤 자리인가요?</span><span className="optional-label">하나를 선택해 주세요</span></div><div className="scene-options">{scenes.map((item) => <button className={`scene-choice${scene === item.id ? " selected" : ""}`} key={item.id} type="button" onClick={() => setScene(item.id)} aria-pressed={scene === item.id}><span className="choice-indicator"/><span className="choice-text"><strong>{item.label}</strong><small>{item.detail}</small></span></button>)}</div>{error && <p role="alert" className="form-error">{error}</p>}<Button type="submit" disabled={saving} className="primary-action">{saving ? "방을 만들고 있어요…" : "설명회 준비하기"}<span>→</span></Button></form>
-        </Card>
+        <div className="hero-copy"><div className="eyebrow"><span className="eyebrow-dot"/> {t.eyebrow}</div><h1 className="home-brand-title" aria-label={t.service} style={{ "--title-chars": Math.max(t.title1.length, t.title2.length, t.title3.length) } as React.CSSProperties}>{t.title1}<br/>{t.title2}<span className="brand-question">{screenLanguage === "ko" ? "?" : ""}</span><br/>{t.title3}</h1><p className="hero-description">{t.description1}<br/>{t.description2}</p><div className="language-pills" aria-label="화면 언어 선택">{SCREEN_LANGUAGES.map((item) => <button type="button" className={`language-pill${screenLanguage === item.code ? " selected" : ""}`} key={item.code} onClick={() => changeScreenLanguage(item.code)} aria-pressed={screenLanguage === item.code}><CountryFlag country={item.country as "US" | "VN" | "CN" | "RU" | "JP" | "KR"}/>{item.name}</button>)}</div></div>
+        <div className="setup-column"><Card className="setup-card"><div className="card-kicker">{t.create} <span className="step-number">01</span></div><h2>{t.question}</h2><p className="card-description">{t.cardDescription}</p>
+          <form onSubmit={createRoom} className="setup-form"><label className="field-label" htmlFor="title">{t.meetingTitle}</label><input id="title" name="title" required maxLength={120} value={title} onChange={(event) => setTitle(event.target.value)} className="text-input" placeholder={t.titlePlaceholder}/><div className="label-row"><span className="field-label">{t.sceneQuestion}</span><span className="optional-label">{t.chooseOne}</span></div><div className="scene-options">{scenes.map((item) => <button className={`scene-choice${scene === item.id ? " selected" : ""}`} key={item.id} type="button" onClick={() => setScene(item.id)} aria-pressed={scene === item.id}><span className="choice-indicator"/><span className="choice-text"><strong>{t.scenes[item.id]}</strong><small>{t.details[item.id]}</small></span></button>)}</div>{error && <p role="alert" className="form-error">{error}</p>}<Button type="submit" disabled={saving} className="primary-action">{saving ? t.creating : t.start}<span>→</span></Button></form>
+        </Card><Card className="join-card"><div className="join-card-copy"><strong>{t.joinHeading}</strong><small>{t.joinPlaceholder}</small></div><form className="join-form" onSubmit={joinRoom}><input className="text-input join-code-input" aria-label={t.joinPlaceholder} placeholder={t.joinPlaceholder} type="text" inputMode="text" autoCapitalize="characters" autoComplete="off" spellCheck={false} maxLength={6} value={joinCode} onChange={(event) => updateJoinCode(event.target.value)}/><Button type="submit" variant="outline" disabled={joinCode.length !== 6 || joining}>{joining ? "…" : t.joinButton}</Button></form>{joinError && <p role="alert" className="form-error join-error">{joinError}</p>}</Card></div>
       </section>
-      <section className="privacy-note"><span className="privacy-icon">↗</span><div><strong>음성 인식에 크롬 기능을, 번역에 AI를 사용해요.</strong><p>설명회 내용은 저장 후 요약에만 사용됩니다.</p></div><span className="privacy-lock">안전한 안내</span></section>
-      <footer className="home-footer"><span>함께 말하면, 더 가까워집니다.</span><span>© 모두의 설명회</span></footer>
+      <section className="privacy-note"><span className="privacy-icon">↗</span><div><strong>{t.privacyTitle}</strong><p>{t.privacyText}</p></div><span className="privacy-lock">{t.privacyLabel}</span></section>
+      <footer className="home-footer"><span>{t.footer}</span><span>© {t.service}</span></footer>
     </main>
   );
 }

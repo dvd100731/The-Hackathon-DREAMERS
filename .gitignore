@@ -19,3 +19,6 @@
 # editor and OS
 .DS_Store
 Thumbs.db
+
+# axhub import: local agent runtime state
+.axhub/

@@ -1,4 +1,4 @@
--- 모두의 설명회: Supabase SQL Editor에서 전체 실행하세요.
+-- 이 회의 통역 되나요?: Supabase SQL Editor에서 전체 실행하세요.
 create extension if not exists pgcrypto;
 
 create table if not exists public.rooms (
@@ -6,6 +6,7 @@ create table if not exists public.rooms (
   code text not null unique,
   title text not null,
   scene text not null check (scene in ('school','safety','university','religion','tourism','other')),
+  translation_languages text[] not null default array['en','vi','zh','ru','ja']::text[],
   status text not null default 'live' check (status in ('live','ended')),
   created_at timestamptz not null default now()
 );
@@ -18,14 +19,18 @@ create table if not exists public.captions (
   original text not null,
   translations jsonb not null default '{}'::jsonb,
   terms jsonb not null default '[]'::jsonb,
+  translation_status text not null default 'pending' check (translation_status in ('pending','translating','completed','failed')),
   created_at timestamptz not null default now()
 );
+alter table public.captions add column if not exists translation_status text not null default 'pending';
+alter table public.captions drop constraint if exists captions_translation_status_check;
+alter table public.captions add constraint captions_translation_status_check check (translation_status in ('pending','translating','completed','failed'));
 create index if not exists captions_room_created_idx on public.captions (room_code, created_at);
 
 create table if not exists public.summaries (
   id uuid primary key default gen_random_uuid(),
   room_code text not null references public.rooms(code) on delete cascade,
-  language text not null check (language in ('ko','en','vi','zh','ru')),
+  language text not null check (language in ('ko','en','vi','zh','ru','ja')),
   summary jsonb not null default '{}'::jsonb,
   todos jsonb not null default '[]'::jsonb,
   is_public boolean not null default false,
@@ -73,3 +78,4 @@ begin
     alter publication supabase_realtime add table public.summaries;
   end if;
 end $$;
+
