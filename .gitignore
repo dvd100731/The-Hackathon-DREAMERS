@@ -1,0 +1,21 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# Next.js
+/.next/
+/out/
+/build/
+
+# environment variables
+.env*
+!.env.local.example
+
+# TypeScript
+/next-env.d.ts
+*.tsbuildinfo
+
+# editor and OS
+.DS_Store
+Thumbs.db
