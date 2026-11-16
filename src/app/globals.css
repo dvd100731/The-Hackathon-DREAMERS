@@ -13,7 +13,9 @@ button { cursor:pointer; }
 .brand-logo-name, .home-brand-title { font-family: var(--font-brand), "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; font-weight: 100; letter-spacing: .025em; }
 .brand-logo-name { font-size: 23px; line-height: 1.05; }
 .brand-question { color: var(--brand); }
-.brand-icon { display: inline-grid; width: 30px; height: 30px; place-items: center; border-radius: 10px; background: var(--brand); color: white; font-size: 16px; font-weight: 800; }
+.brand-icon { flex: 0 0 auto; display: block; width: 30px; height: 30px; }
+.brand-text { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
+.brand-description { color: var(--muted); font-size: 12px; font-weight: 600; line-height: 1.2; letter-spacing: -.01em; }
 .topbar-tag { color: #8a939d; font-size: 13px; }
 .hero-grid { padding: 84px 0 76px; display: grid; grid-template-columns: 1fr .92fr; gap: 76px; align-items: center; }
 .hero-copy { padding: 10px 0 0 5px; }
@@ -116,9 +118,9 @@ button { cursor:pointer; }
 .host-caption:last-child { border-bottom: 0; }
 .host-caption p { margin: 0 0 11px; color: #344153; font-size: 14px; line-height: 1.7; }
 .audience-shell { width: min(100%, 680px); min-height: 100vh; padding: 0 24px 115px; margin: 0 auto; background: var(--background); }
-.audience-topbar { height: 70px; display: flex; align-items: center; justify-content: space-between; }
+.audience-topbar { min-height: 70px; display: flex; align-items: center; justify-content: space-between; }
 .audience-topbar .brand-mark { font-size: 14px; }
-.audience-topbar .brand-icon { width: 27px; height: 27px; font-size: 14px; border-radius: 9px; }
+.audience-topbar .brand-icon { width: 27px; height: 27px; }
 .audience-heading { padding: 22px 3px 20px; }
 .audience-heading h1 { margin: 10px 0 8px; font-size: 28px; line-height: 1.35; letter-spacing: -.065em; }
 .audience-heading p, .summary-heading > p { margin: 0; color: #818c99; font-size: 13px; }
@@ -203,6 +205,8 @@ button { cursor:pointer; }
   .topbar { min-height: 69px; }
   .brand-mark { font-size: 15px; }
   .brand-icon { width: 28px; height: 28px; }
+  .brand-description { font-size: 11px; }
+  .topbar, .app-header, .audience-topbar { padding: 10px 0; }
   .topbar-tag { font-size: 10px; }
   .hero-grid { grid-template-columns: 1fr; gap: 27px; padding: 42px 0 30px; }
   .hero-copy { padding: 0; }

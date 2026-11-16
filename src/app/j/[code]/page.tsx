@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";
 import type { RealtimeChannel } from "@supabase/supabase-js";
-import { Card, LanguageSelector, StatusBadge } from "@/components/ui";
+import { BrandLogo, Card, LanguageSelector, StatusBadge } from "@/components/ui";
 import { DEFAULT_LANGUAGES, LANGUAGES } from "@/lib/constants";
 import { getMessages, type ScreenLanguage } from "@/lib/i18n";
 import { createSupabaseClient } from "@/lib/supabase-browser";
@@ -153,7 +152,7 @@ export default function AudiencePage() {
 
   return (
     <main className="audience-shell">
-      <header className="audience-topbar"><Link href="/" className="brand-mark"><span className="brand-icon">이</span><span className="service-name brand-logo-name">{t.service}</span></Link><StatusBadge tone="success">{t.realTimeCaptions}</StatusBadge></header>
+      <header className="audience-topbar"><BrandLogo name={t.service} description={t.serviceDescription}/><StatusBadge tone="success">{t.realTimeCaptions}</StatusBadge></header>
       <section className="audience-heading"><span className="eyebrow">{t.audience} · {t.code} {code}</span><h1>{title || t.service}</h1><p>{t.chooseLanguage}</p></section>
       <Card className="language-card"><div><strong>{t.captionLanguage}</strong><small>{t.changeAnytime}</small></div><LanguageSelector value={language} languages={LANGUAGES.filter(({ code }) => availableLanguages.includes(code))} onChange={changeLanguage}/></Card>
       <section className="live-panel"><div className="live-heading"><span className="live-dot"/> {t.realTimeCaptions} <span className="live-heading-rule"/></div>

@@ -1,9 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button, Card, CountryFlag } from "@/components/ui";
+import { BrandLogo, Button, Card, CountryFlag } from "@/components/ui";
 import { createSupabaseClient } from "@/lib/supabase-browser";
 import { type SceneType } from "@/lib/constants";
 import { getMessages, SCREEN_LANGUAGES, type ScreenLanguage } from "@/lib/i18n";
@@ -105,7 +104,7 @@ export default function Home() {
 
   return (
     <main className="page-shell">
-      <header className="topbar"><Link href="/" className="brand-mark"><span className="brand-icon">이</span><span className="service-name brand-logo-name">{t.service}</span></Link><span className="topbar-tag">{t.tagline}</span></header>
+      <header className="topbar"><BrandLogo name={t.service} description={t.serviceDescription}/><span className="topbar-tag">{t.tagline}</span></header>
       <section className="hero-grid">
         <div className="hero-copy"><div className="eyebrow"><span className="eyebrow-dot"/> {t.eyebrow}</div><h1 className="home-brand-title" aria-label={t.service} style={{ "--title-chars": Math.max(t.title1.length, t.title2.length, t.title3.length) } as React.CSSProperties}>{t.title1}<br/>{t.title2}<span className="brand-question">{screenLanguage === "ko" ? "?" : ""}</span><br/>{t.title3}</h1><p className="hero-description">{t.description1}<br/>{t.description2}</p><div className="language-pills" aria-label="화면 언어 선택">{SCREEN_LANGUAGES.map((item) => <button type="button" className={`language-pill${screenLanguage === item.code ? " selected" : ""}`} key={item.code} onClick={() => changeScreenLanguage(item.code)} aria-pressed={screenLanguage === item.code}><CountryFlag country={item.country as "US" | "VN" | "CN" | "RU" | "JP" | "KR"}/>{item.name}</button>)}</div></div>
         <div className="setup-column"><Card className="setup-card"><div className="card-kicker">{t.create} <span className="step-number">01</span></div><h2>{t.question}</h2><p className="card-description">{t.cardDescription}</p>

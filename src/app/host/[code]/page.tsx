@@ -2,10 +2,9 @@
 
 import { FormEvent, KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
-import { Button, Card, StatusBadge, ScreenLanguagePicker, CountryFlag } from "@/components/ui";
+import { BrandLogo, Button, Card, StatusBadge, ScreenLanguagePicker, CountryFlag } from "@/components/ui";
 import { createSupabaseClient } from "@/lib/supabase-browser";
 import { useRoomPresence } from "@/lib/use-room-presence";
 import { DEFAULT_LANGUAGES, LANGUAGES, type LanguageCode } from "@/lib/constants";
@@ -312,7 +311,7 @@ export default function HostPage() {
 
   return (
     <main className="app-shell">
-      <header className="app-header"><Link href="/" className="brand-mark"><span className="brand-icon">이</span><span className="service-name brand-logo-name">{t.service}</span></Link><div className="host-header-tools"><span className="host-label"><span className={`live-dot${listening ? "" : " paused-dot"}`}/>{listening ? t.listening : t.host}</span><ScreenLanguagePicker value={screenLanguage} onChange={changeScreenLanguage}/></div></header>
+      <header className="app-header"><BrandLogo name={t.service} description={t.serviceDescription}/><div className="host-header-tools"><span className="host-label"><span className={`live-dot${listening ? "" : " paused-dot"}`}/>{listening ? t.listening : t.host}</span><ScreenLanguagePicker value={screenLanguage} onChange={changeScreenLanguage}/></div></header>
       <div className="host-heading"><div><span className="eyebrow">{t.scenes[scene as keyof typeof t.scenes] ?? t.create} · {t.code} {code}</span><h1>{title || t.create}</h1><p className="hero-description">{t.hostIntro}</p></div><StatusBadge tone={listening ? "success" : "neutral"}>{listening ? t.live : t.waiting}</StatusBadge></div>
       <div className="host-layout">
         <section className="host-primary">

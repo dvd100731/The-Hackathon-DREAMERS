@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { LANGUAGES } from "@/lib/constants";
 import { US, VN, CN, RU, JP, KR } from "country-flag-icons/react/3x2";
 import type { ComponentType, SVGProps } from "react";
@@ -45,6 +46,14 @@ export function StatusBadge({ children, tone = "neutral" }: { children: React.Re
 
 export function BrandName({ className = "" }: { className?: string }) {
   return <span className={`service-name ${className}`}>이 회의 통역 되나요<span className="brand-question">?</span></span>;
+}
+
+export function BrandIcon() {
+  return <svg className="brand-icon" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#0B7A5E"/><rect x="6" y="13" width="20" height="4" rx="2" fill="#fff"/><rect x="10" y="20" width="12" height="4" rx="2" fill="#fff"/></svg>;
+}
+
+export function BrandLogo({ name, description }: { name?: string; description: string }) {
+  return <Link href="/" className="brand-mark"><BrandIcon/><span className="brand-text">{name ? <span className="service-name brand-logo-name">{name}</span> : <BrandName className="brand-logo-name"/>}<span className="brand-description">{description}</span></span></Link>;
 }
 
 export function LanguageSelector({ value, onChange, languages = LANGUAGES }: { value?: string; onChange?: (lang: string) => void; languages?: readonly (typeof LANGUAGES)[number][] }) {
